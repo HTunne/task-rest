@@ -1,9 +1,14 @@
 from marshmallow import Schema, fields, post_dump
 from datetime import datetime
 
+
+class TaskAnnotationSchema(Schema):
+    description = fields.Str(required = True)
+    entry = fields.DateTime(format="rfc", dump_only = True) # read-only
+
 class TaskSchema(Schema):
-    annotations = fields.List(fields.Str)
-    depends = fields.List(fields.Str())
+    annotations = fields.List(fields.Nested(TaskAnnotationSchema), dump_only = True)
+    depends = fields.List(fields.Nested(lambda: TaskSchema(exclude=("depends",))), dump_only = True)
     description = fields.Str(required = True)
     due = fields.DateTime(format="rfc")
     end = fields.DateTime(format="rfc", dump_only = True) # read-only
