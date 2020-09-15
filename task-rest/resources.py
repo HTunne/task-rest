@@ -5,6 +5,7 @@ from tasklib import TaskWarrior
 from schemas import TaskSchema
 
 ts = TaskSchema(unknown='EXCLUDE')
+tas = TaskSchema(unknown='EXCLUDE')
 tw = TaskWarrior()
 
 class Task(Resource):
@@ -41,15 +42,19 @@ class TaskList(Resource):
 class TaskCommand(Resource):
     def put(self, task_uuid, command):
         print(command)
+        task = tw.tasks.get(uuid = task_uuid)
         if command == 'done':
-            task = tw.tasks.get(uuid = task_uuid)
             task.done()
         elif command == 'start':
-            task = tw.tasks.get(uuid = task_uuid)
             task.start()
         elif command == 'stop':
-            task = tw.tasks.get(uuid = task_uuid)
             task.stop()
+        elif command == 'add_annotation':
+            data = tas.loads(request.data)
+            task.add_annotation(data["description"])
+        elif command == 'remove_annotation':
+            data = tas.loads(request.data)
+            task.remove_annotation(data["description"])
         return jsonify(ts.dump(task))
 
 
