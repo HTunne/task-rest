@@ -6,28 +6,31 @@ class TaskAnnotationSchema(Schema):
     description = fields.Str(required = True)
     entry = fields.DateTime(format="rfc", dump_only = True) # read-only
 
+
 class TaskSchema(Schema):
-    annotations = fields.List(fields.Nested(TaskAnnotationSchema), dump_only = True)
-    depends = fields.List(fields.Nested(lambda: TaskSchema(exclude=("depends",))), dump_only = True)
     description = fields.Str(required = True)
     due = fields.DateTime(format="rfc")
-    end = fields.DateTime(format="rfc", dump_only = True) # read-only
-    entry = fields.DateTime(format="rfc", dump_only = True) # read-only
-    id = fields.Int(dump_only=True) # read-only
-    imask = fields.Int(dump_only=True) # read-only
-    mask = fields.Str()
-    modified = fields.DateTime(format="rfc", dump_only=True) # read-only
-    parent = fields.Str(dump_only=True) # read-only
     priority = fields.Str()
     project = fields.Str()
     recur = fields.Str()
     scheduled = fields.DateTime(format="rfc")
     start = fields.DateTime(format="rfc")
-    status = fields.Str(dump_only = True) # read-only
     tags = fields.List(fields.Str())
     until = fields.DateTime(format="rfc")
-    urgency = fields.Float(dump_only= True) # read-only
-    uuid = fields.Str(required = True, dump_only=True) # read-only
+
+    # read-only
+    annotations = fields.List(fields.Nested(TaskAnnotationSchema), dump_only = True)
+    depends = fields.List(fields.Nested(lambda: TaskSchema(exclude=("depends",))), dump_only = True)
+    end = fields.DateTime(format="rfc", dump_only = True)
+    entry = fields.DateTime(format="rfc", dump_only = True)
+    id = fields.Int(dump_only=True)
+    imask = fields.Int(dump_only=True)
+    mask = fields.Str(dump_only=True)
+    modified = fields.DateTime(format="rfc", dump_only=True)
+    parent = fields.Str(dump_only=True)
+    status = fields.Str(dump_only = True)
+    urgency = fields.Float(dump_only= True)
+    uuid = fields.Str(required = True, dump_only=True)
 
     @post_dump
     def remove_none_values(self, data, **kwargs):
@@ -41,3 +44,7 @@ class TaskSchema(Schema):
             key: value for key, value in data.items() if ((type(value) is not list) or value)
         }
 
+
+# used to add or remove dependancies, usually uuid in not deserialized
+class DependantTaskSchema(Schema):
+    uuid = fields.Str(required = True)
