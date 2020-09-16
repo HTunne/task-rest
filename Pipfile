@@ -6,6 +6,11 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+flask = "*"
+flask-restful = "*"
+marshmallow = "*"
+flask-cors = "*"
+tasklib = "*"
 
 [requires]
 python_version = "3.6"
