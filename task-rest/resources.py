@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from flask_restful import Resource
-from tasklib import TaskWarrior
+from tasklib import TaskWarrior, Task
 
 from schemas import TaskSchema, TaskAnnotationSchema, DependantTaskSchema
 
@@ -9,7 +9,7 @@ tas = TaskAnnotationSchema(unknown='EXCLUDE')
 dts = DependantTaskSchema(unknown='EXCLUDE')
 tw = TaskWarrior()
 
-class Task(Resource):
+class TaskResource(Resource):
     def get(self, task_uuid):
         task = tw.tasks.get(uuid = task_uuid)
         return jsonify(ts.dump(task))
@@ -28,7 +28,7 @@ class Task(Resource):
         return jsonify(ts.dump(task))
 
 
-class TaskList(Resource):
+class TaskListResource(Resource):
     def get(self):
         return jsonify(ts.dump(tw.tasks.all(), many=True))
 
@@ -40,7 +40,7 @@ class TaskList(Resource):
         task.save()
         return jsonify(ts.dump(task))
 
-class TaskCommand(Resource):
+class TaskCommandResource(Resource):
     def put(self, task_uuid, command):
         print(command)
         task = tw.tasks.get(uuid = task_uuid)
