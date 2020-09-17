@@ -11,6 +11,7 @@ flask-restful = "*"
 marshmallow = "*"
 flask-cors = "*"
 tasklib = "*"
+pyjwt = "*"
 
 [requires]
 python_version = "3.6"

@@ -1,13 +1,18 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
+from werkzeug.security import generate_password_hash
 
-from resources import TaskResource, TaskListResource, TaskCommandResource
+from resources import TaskResource, TaskListResource, TaskCommandResource, AuthResource
 
 app = Flask(__name__)
-api = Api(app)
+app.config['SECRET_KEY'] = 'Th1s1ss3cr3t'
+app.config['PASSWORD'] = generate_password_hash('password', method='sha256')
 
 CORS(app, resources={r'/*': {'origins': '*'}})
+
+api = Api(app)
+api.add_resource(AuthResource, '/auth')
 api.add_resource(TaskListResource, '/')
 api.add_resource(TaskResource, '/<string:task_uuid>')
 api.add_resource(TaskCommandResource, '/<string:task_uuid>/<string:command>')

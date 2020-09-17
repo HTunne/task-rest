@@ -1,6 +1,11 @@
-from flask import jsonify, request
+from functools import wraps
+from flask import current_app
+from flask import jsonify, request, make_response
 from flask_restful import Resource
 from tasklib import TaskWarrior, Task
+from werkzeug.security import check_password_hash
+from datetime import datetime, timedelta
+import jwt
 
 from schemas import TaskSchema, TaskAnnotationSchema, DependantTaskSchema
 
@@ -9,7 +14,30 @@ tas = TaskAnnotationSchema(unknown='EXCLUDE')
 dts = DependantTaskSchema(unknown='EXCLUDE')
 tw = TaskWarrior()
 
+
+def token_required(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
+
+        try:
+            token = request.headers['x-access-tokens']
+        except:
+            return jsonify({'message': 'Token is required.'})
+
+        try:
+            data = jwt.decode(token, current_app.config['SECRET_KEY'])
+        except:
+            return jsonify({'message': 'Token is not valid.'})
+
+        return f(*args, **kwargs)
+    return decorator
+
+
+
+
 class TaskResource(Resource):
+    method_decorators = [token_required]
     def get(self, task_uuid):
         task = tw.tasks.get(uuid = task_uuid)
         return jsonify(ts.dump(task))
@@ -29,6 +57,7 @@ class TaskResource(Resource):
 
 
 class TaskListResource(Resource):
+    method_decorators = [token_required]
     def get(self):
         return jsonify(ts.dump(tw.tasks.all(), many=True))
 
@@ -40,7 +69,9 @@ class TaskListResource(Resource):
         task.save()
         return jsonify(ts.dump(task))
 
+
 class TaskCommandResource(Resource):
+    method_decorators = [token_required]
     def put(self, task_uuid, command):
         print(command)
         task = tw.tasks.get(uuid = task_uuid)
@@ -69,4 +100,15 @@ class TaskCommandResource(Resource):
         return jsonify(ts.dump(task))
 
 
+class AuthResource(Resource):
+    method_decorators = [token_required]
+    def get(self):
+        auth = request.authorization
 
+        if auth and auth.password and check_password_hash(current_app.config['PASSWORD'], auth.password):
+            token = jwt.encode({
+                'iat': datetime.utcnow(),
+                'exp': datetime.utcnow() + timedelta(minutes=60)
+            }, current_app.config['SECRET_KEY'])
+            return jsonify({'token': token.decode('UTF-8')})
+        return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "login required"'})
