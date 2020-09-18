@@ -19,16 +19,11 @@ def token_required(f):
     @wraps(f)
     def decorator(*args, **kwargs):
         token = None
-
         try:
             token = request.headers['x-access-tokens']
-        except:
-            return jsonify({'message': 'Token is required.'})
-
-        try:
             data = jwt.decode(token, current_app.config['SECRET_KEY'])
-        except:
-            return jsonify({'message': 'Token is not valid.'})
+        except Exception as e:
+            return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "{}"'.format(e)})
 
         return f(*args, **kwargs)
     return decorator
@@ -72,7 +67,6 @@ class TaskListResource(Resource):
 class TaskCommandResource(Resource):
     method_decorators = [token_required]
     def put(self, task_uuid, command):
-        print(command)
         task = tw.tasks.get(uuid = task_uuid)
         if command == 'done':
             task.done()
@@ -102,7 +96,6 @@ class TaskCommandResource(Resource):
 class AuthResource(Resource):
     def get(self):
         auth = request.authorization
-        print(auth)
         if auth and auth.password and check_password_hash(current_app.config['PASSWORD'], auth.password):
             token = jwt.encode({
                 'iat': datetime.utcnow(),

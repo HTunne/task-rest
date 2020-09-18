@@ -8,7 +8,7 @@ from resources import TaskResource, TaskListResource, TaskCommandResource, AuthR
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = urandom(16)
-app.config['TOKEN_EXP'] = 30
+app.config['TOKEN_EXP'] = 60
 app.config['PASSWORD'] = generate_password_hash('password', method='sha256')
 
 CORS(app, resources={r'/*': {'origins': '*'}})
