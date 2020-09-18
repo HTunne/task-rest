@@ -9,14 +9,14 @@ class TaskAnnotationSchema(Schema):
 
 class TaskSchema(Schema):
     description = fields.Str(required = True)
-    due = fields.DateTime(format="rfc")
-    priority = fields.Str()
-    project = fields.Str()
-    recur = fields.Str()
-    scheduled = fields.DateTime(format="rfc")
-    start = fields.DateTime(format="rfc")
-    tags = fields.List(fields.Str())
-    until = fields.DateTime(format="rfc")
+    due = fields.DateTime(format="rfc", missing=None)
+    priority = fields.Str(missing=None)
+    project = fields.Str(missing=None)
+    recur = fields.Str(missing=None)
+    scheduled = fields.DateTime(format="rfc", missing=None)
+    start = fields.DateTime(format="rfc", missing=None)
+    tags = fields.List(fields.Str(), missing=None)
+    until = fields.DateTime(format="rfc", missing=None)
 
     # read-only
     annotations = fields.List(fields.Nested(TaskAnnotationSchema), dump_only = True)
