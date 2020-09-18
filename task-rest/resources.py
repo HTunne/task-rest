@@ -35,12 +35,11 @@ def token_required(f):
 
 
 
-
 class TaskResource(Resource):
     method_decorators = [token_required]
     def get(self, task_uuid):
         task = tw.tasks.get(uuid = task_uuid)
-        return jsonify(ts.dump(task))
+        return jsonify({'task': ts.dump(task)})
 
     def put(self, task_uuid):
         task = tw.tasks.get(uuid = task_uuid)
@@ -48,18 +47,18 @@ class TaskResource(Resource):
         for key in data:
             task[key] = data[key]
         task.save()
-        return jsonify(ts.dump(task))
+        return jsonify({'task': ts.dump(task)})
 
     def delete(self, task_uuid):
         task = tw.tasks.get(uuid = task_uuid)
         task.delete()
-        return jsonify(ts.dump(task))
+        return jsonify({'task': ts.dump(task)})
 
 
 class TaskListResource(Resource):
     method_decorators = [token_required]
     def get(self):
-        return jsonify(ts.dump(tw.tasks.all(), many=True))
+        return jsonify({'tasks': ts.dump(tw.tasks.all(), many=True)})
 
     def post(self):
         task = Task(tw)
@@ -67,7 +66,7 @@ class TaskListResource(Resource):
         for key in data:
             task[key] = data[key]
         task.save()
-        return jsonify(ts.dump(task))
+        return jsonify({'task': ts.dump(task)})
 
 
 class TaskCommandResource(Resource):
@@ -97,18 +96,17 @@ class TaskCommandResource(Resource):
             dep = tw.tasks.get(uuid = data['uuid'])
             task['depends'].remove(dep)
             task.save()
-        return jsonify(ts.dump(task))
+        return jsonify({'task': ts.dump(task)})
 
 
 class AuthResource(Resource):
-    method_decorators = [token_required]
     def get(self):
         auth = request.authorization
-
+        print(auth)
         if auth and auth.password and check_password_hash(current_app.config['PASSWORD'], auth.password):
             token = jwt.encode({
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(minutes=60)
+                'exp': datetime.utcnow() + timedelta(minutes=current_app.config['TOKEN_EXP'])
             }, current_app.config['SECRET_KEY'])
             return jsonify({'token': token.decode('UTF-8')})
         return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "login required"'})
