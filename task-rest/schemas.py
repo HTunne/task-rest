@@ -45,6 +45,7 @@ class TaskSchema(Schema):
         }
 
 
-# used to add or remove dependancies, usually uuid in not deserialized
+
+# used to add or remove dependancies, usually uuid is not deserialized
 class DependantTaskSchema(Schema):
     uuid = fields.Str(required = True)
