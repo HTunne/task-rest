@@ -27,7 +27,7 @@ class TaskSchema(Schema):
     imask = fields.Int(dump_only=True)
     mask = fields.Str(dump_only=True)
     modified = fields.DateTime(format="rfc", dump_only=True)
-    parent = fields.Str(dump_only=True)
+    parent = fields.Nested(lambda: TaskSchema(exclude=("parent",)), dump_only=True)
     status = fields.Str(dump_only = True)
     urgency = fields.Float(dump_only= True)
     uuid = fields.Str(required = True, dump_only=True)
