@@ -23,11 +23,11 @@ def main():
             config['PASSWORD'] = generate_password_hash(input("Enter password: ").strip())
 
     if args.origin:
-        config['ORIGIN'] = args.origin
+        config['CORS_ORIGINS'] = args.origin
     else:
-        config['ORIGIN'] = ''
-        while not config['ORIGIN']:
-            config['ORIGIN'] = input("Enter origin: ").strip() # support comma spaced list
+        config['CORS_ORIGINS'] = ''
+        while not config['CORS_ORIGINS']:
+            config['CORS_ORIGINS'] = input("Enter origin: ").strip() # support comma spaced list
 
     if args.tokenexp:
         config['TOKENEXP'] = args.tokenexp

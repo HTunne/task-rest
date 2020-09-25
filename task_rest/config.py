@@ -26,4 +26,4 @@ class DevelopmentConfig(Config):
     TOKEN_EXP = 999
     PASSWORD = generate_password_hash('password', method='sha256')
     SECRET_KEY = 'SECRET_KEY'
-    ORIGIN = '*'
+    CORS_ORIGINS = '*'

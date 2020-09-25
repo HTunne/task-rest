@@ -13,7 +13,7 @@ def create_app():
     else:
         app.config.from_object(DevelopmentConfig())
 
-    CORS(app, resources={r'/*': {'origins': app.config['ORIGIN']}})
+    CORS(app)
 
     api = Api(app)
     api.add_resource(AuthResource, '/auth')
