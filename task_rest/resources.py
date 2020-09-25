@@ -2,7 +2,7 @@ from functools import wraps
 from flask import current_app
 from flask import jsonify, request, make_response
 from flask_restful import Resource
-from tasklib import TaskWarrior, Task
+from tasklib import Task
 from tasklib.backends import TaskWarriorException
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
@@ -13,7 +13,6 @@ from task_rest.schemas import TaskSchema, TaskAnnotationSchema, DependantTaskSch
 ts = TaskSchema(unknown='EXCLUDE')
 tas = TaskAnnotationSchema(unknown='EXCLUDE')
 dts = DependantTaskSchema(unknown='EXCLUDE')
-tw = TaskWarrior()
 
 
 def token_required(f):
@@ -54,14 +53,17 @@ def json_task_and_message(task, message, msg_type):
 
 
 class TaskResource(Resource):
+    def __init__(self, tw):
+        self.tw = tw
+
     method_decorators = [token_required, expose_errors]
     def get(self, task_uuid):
-        task = tw.tasks.get(uuid = task_uuid)
+        task = self.tw.tasks.get(uuid = task_uuid)
         return jsonify({'task': ts.dump(task)})
 
     # task modify
     def put(self, task_uuid):
-        task = tw.tasks.get(uuid = task_uuid)
+        task = self.tw.tasks.get(uuid = task_uuid)
         data = ts.loads(request.data)
         for key in data:
             task[key] = data[key]
@@ -70,18 +72,21 @@ class TaskResource(Resource):
 
     # task delete
     def delete(self, task_uuid):
-        task = tw.tasks.get(uuid = task_uuid)
+        task = self.tw.tasks.get(uuid = task_uuid)
         task.delete()
         return json_task_and_message(task, 'Deleted task {}.', 'info')
 
 
 class TaskListResource(Resource):
+    def __init__(self, tw):
+        self.tw = tw
+
     method_decorators = [token_required, expose_errors]
     def get(self):
-        return jsonify({'tasks': ts.dump(tw.tasks.all(), many=True)})
+        return jsonify({'tasks': ts.dump(self.tw.tasks.all(), many=True)})
 
     def post(self):
-        task = Task(tw)
+        task = Task(self.tw)
         data = ts.loads(request.data)
         for key in data:
             task[key] = data[key]
@@ -90,9 +95,12 @@ class TaskListResource(Resource):
 
 
 class TaskCommandResource(Resource):
+    def __init__(self, tw):
+        self.tw = tw
+
     method_decorators = [token_required, expose_errors]
     def put(self, task_uuid, command):
-        task = tw.tasks.get(uuid = task_uuid)
+        task = self.tw.tasks.get(uuid = task_uuid)
         if command == 'done':
             msg = 'Completed task {}.'
             task.done()
@@ -113,13 +121,13 @@ class TaskCommandResource(Resource):
         elif command == 'add_dependency':
             msg = 'Added dependency to task {}'
             data = dts.loads(request.data)
-            dep = tw.tasks.get(uuid = data['uuid'])
+            dep = self.tw.tasks.get(uuid = data['uuid'])
             task['depends'].add(dep)
             task.save()
         elif command == 'remove_dependency':
             msg = 'Removed dependency to task {}'
             data = dts.loads(request.data)
-            dep = tw.tasks.get(uuid = data['uuid'])
+            dep = self.tw.tasks.get(uuid = data['uuid'])
             task['depends'].remove(dep)
             task.save()
         return json_task_and_message(task, msg, 'info')

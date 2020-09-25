@@ -1,5 +1,6 @@
 from flask import Flask
 from os import urandom
+from os.path import join
 import json
 from werkzeug.security import generate_password_hash
 
@@ -8,6 +9,8 @@ class Config(object):
     """Base config."""
     DEBUG = False
     TESTING = False
+    TASKDATA_LOCATION = "~/.task"
+    TASKRC_LOCATION = "~/.taskrc"
 
 
 class ProductionConfig(Config):
@@ -17,8 +20,6 @@ class ProductionConfig(Config):
 
             conf_dict = json.load(f)
             for key, value in conf_dict.items():
-                print(key)
-                print(value)
                 setattr(self, key, value)
 
 class DevelopmentConfig(Config):
@@ -27,3 +28,5 @@ class DevelopmentConfig(Config):
     PASSWORD = generate_password_hash('password', method='sha256')
     SECRET_KEY = 'SECRET_KEY'
     CORS_ORIGINS = '*'
+    TASKDATA_LOCATION = join(app.instance_path, "dev", ".task")
+    TASKRC_LOCATION = join(app.instance_path, "dev", ".taskrc")

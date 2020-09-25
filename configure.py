@@ -11,6 +11,8 @@ def main():
     parser.add_argument("-p", "--password", help="password")
     parser.add_argument("-o", "--origin", help="cross site origin")
     parser.add_argument("-t", "--tokenexp", help="token expiry time", type=int)
+    parser.add_argument("--data-location", help="location of task data (default='~/.task'")
+    parser.add_argument("--taskrc-location", help="location of taskrc (default='~/.taskrc'")
 
     args = parser.parse_args()
 
@@ -30,15 +32,28 @@ def main():
             config['CORS_ORIGINS'] = input("Enter origin: ").strip() # support comma spaced list
 
     if args.tokenexp:
-        config['TOKENEXP'] = args.tokenexp
+        config['TOKEN_EXP'] = args.tokenexp
     else:
-        config['TOKENEXP'] = ''
-        while not config['TOKENEXP']:
+        config['TOKEN_EXP'] = ''
+        while not config['TOKEN_EXP']:
             try:
-                config['TOKENEXP'] = int(input("Enter token expiry time (minutes): ").strip())
+                config['TOKEN_EXP'] = int(input("Enter token expiry time (minutes): ").strip())
             except:
                 pass
 
+    if args.data_location:
+        config['TASKDATA_LOCATION'] = args.data_location
+    else:
+        taskdata_location = input("Enter alternative taskdata location (blank for default '~/.task'): ").strip() # support comma spaced list
+        if taskdata_location:
+            config['TASKDATA_LOCATION'] = taskdata_location
+
+    if args.taskrc_location:
+        config['TASKRC_LOCATION'] = args.taskrc_location
+    else:
+        taskrc_location = input("Enter alternative taskrc location (blank for default '~/.taskrc'): ").strip() # support comma spaced list
+        if taskrc_location:
+            config['TASKRC_LOCATION'] = taskrc_location
 
     with open('instance/config.json', 'w') as conf_file:
         json.dump(config, conf_file)
