@@ -34,7 +34,12 @@ def expose_errors(f):
         try:
             result = f(*args, **kwargs)
         except TaskWarriorException as e:
-            error = '\n'.join([x for x in str(e).split('\n') if not (x.startswith("Configuration override") or x.startswith("Command used"))])
+            error = '\n'.join([x for x in str(e).split('\n') if not (
+                x.startswith("Configuration override")
+                or x.startswith("Command used")
+                or x.startswith("TASKRC")
+                or x.startswith("TASKDATA")
+            )])
             result = jsonify({'message': {
                 'description': error,
                 'type': 'error'
@@ -131,6 +136,15 @@ class TaskCommandResource(Resource):
             task['depends'].remove(dep)
             task.save()
         return json_task_and_message(task, msg, 'info')
+
+
+class TaskServerResource(Resource):
+    def __init__(self, tw):
+        self.tw = tw
+
+    method_decorators = [token_required, expose_errors]
+    def get(self):
+        self.tw.sync()
 
 
 class AuthResource(Resource):
