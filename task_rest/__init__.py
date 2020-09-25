@@ -1,23 +1,24 @@
-from os import urandom
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
-from werkzeug.security import generate_password_hash
 
-from resources import TaskResource, TaskListResource, TaskCommandResource, AuthResource
+from task_rest.config import ProductionConfig, DevelopmentConfig
+from task_rest.resources import TaskResource, TaskListResource, TaskCommandResource, AuthResource
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = urandom(16)
-app.config['TOKEN_EXP'] = 60
-app.config['PASSWORD'] = generate_password_hash('password', method='sha256')
+def create_app():
+    app = Flask(__name__, instance_relative_config=True)
+    if app.config["ENV"] == "production":
+        app.config.from_object(ProductionConfig())
+        print(app.config)
+    else:
+        app.config.from_object(DevelopmentConfig())
 
-CORS(app, resources={r'/*': {'origins': '*'}})
+    CORS(app, resources={r'/*': {'origins': app.config['ORIGIN']}})
 
-api = Api(app)
-api.add_resource(AuthResource, '/auth')
-api.add_resource(TaskListResource, '/')
-api.add_resource(TaskResource, '/<string:task_uuid>')
-api.add_resource(TaskCommandResource, '/<string:task_uuid>/<string:command>')
+    api = Api(app)
+    api.add_resource(AuthResource, '/auth')
+    api.add_resource(TaskListResource, '/')
+    api.add_resource(TaskResource, '/<string:task_uuid>')
+    api.add_resource(TaskCommandResource, '/<string:task_uuid>/<string:command>')
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    return app

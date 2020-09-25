@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
 import jwt
 
-from schemas import TaskSchema, TaskAnnotationSchema, DependantTaskSchema
+from task_rest.schemas import TaskSchema, TaskAnnotationSchema, DependantTaskSchema
 
 ts = TaskSchema(unknown='EXCLUDE')
 tas = TaskAnnotationSchema(unknown='EXCLUDE')
