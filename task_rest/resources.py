@@ -145,6 +145,12 @@ class TaskServerResource(Resource):
     method_decorators = [token_required, expose_errors]
     def get(self):
         self.tw.sync()
+        return jsonify({
+            'message': {
+                'description': 'Sync successful.',
+                'type': 'info'
+            }
+        })
 
 
 class AuthResource(Resource):
