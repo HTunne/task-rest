@@ -109,6 +109,10 @@ class TaskCommandResource(Resource):
         if command == 'done':
             msg = 'Completed task {}.'
             task.done()
+        elif command == 'restore':
+            msg = 'Restored task {}.'
+            task['status'] = 'pending'
+            task.save()
         elif command == 'start':
             msg = 'Started task {}.'
             task.start()
