@@ -21,7 +21,7 @@ def token_required(f):
         token = None
         try:
             token = request.headers['x-access-tokens']
-            data = jwt.decode(token, current_app.config['SECRET_KEY'])
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms="HS256")
         except Exception as e:
             return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "{}"'.format(e)})
 
@@ -164,6 +164,6 @@ class AuthResource(Resource):
             token = jwt.encode({
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(minutes=current_app.config['TOKEN_EXP'])
-            }, current_app.config['SECRET_KEY'])
-            return jsonify({'token': token.decode('UTF-8')})
+            }, current_app.config['SECRET_KEY'], algorithm="HS256")
+            return jsonify({'token': token})
         return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "login required"'})
