@@ -2,7 +2,7 @@ from functools import wraps
 from flask import current_app
 from flask import jsonify, request, make_response
 from flask_restful import Resource
-from tasklib import Task
+from tasklib import TaskWarrior, Task
 from tasklib.backends import TaskWarriorException
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
@@ -22,10 +22,11 @@ def token_required(f):
         try:
             token = request.headers['x-access-tokens']
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms="HS256")
+            user = data['public_id']
         except Exception as e:
             return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "{}"'.format(e)})
 
-        return f(*args, **kwargs)
+        return f(user, *args, **kwargs)
     return decorator
 
 def expose_errors(f):
@@ -56,19 +57,24 @@ def json_task_and_message(task, message, msg_type):
         }
     })
 
+def tw_for_user(user):
+    return TaskWarrior(
+        data_location=current_app.config['USER_CONF'][user]['TASKDATA_LOCATION'],
+        taskrc_location=current_app.config['USER_CONF'][user]['TASKRC_LOCATION']
+    )
+
 
 class TaskResource(Resource):
-    def __init__(self, tw):
-        self.tw = tw
-
     method_decorators = [token_required, expose_errors]
-    def get(self, task_uuid):
-        task = self.tw.tasks.get(uuid = task_uuid)
+    def get(self, user, task_uuid):
+        tw = tw_for_user(user)
+        task = tw.tasks.get(uuid = task_uuid)
         return jsonify({'task': ts.dump(task)})
 
     # task modify
-    def put(self, task_uuid):
-        task = self.tw.tasks.get(uuid = task_uuid)
+    def put(self, user, task_uuid):
+        tw = tw_for_user(user)
+        task = tw.tasks.get(uuid = task_uuid)
         data = ts.loads(request.data)
         for key in data:
             task[key] = data[key]
@@ -76,22 +82,22 @@ class TaskResource(Resource):
         return json_task_and_message(task, 'Modified task {}.', 'success')
 
     # task delete
-    def delete(self, task_uuid):
-        task = self.tw.tasks.get(uuid = task_uuid)
+    def delete(self, user, task_uuid):
+        tw = tw_for_user(user)
+        task = tw.tasks.get(uuid = task_uuid)
         task.delete()
         return json_task_and_message(task, 'Deleted task {}.', 'info')
 
 
 class TaskListResource(Resource):
-    def __init__(self, tw):
-        self.tw = tw
-
     method_decorators = [token_required, expose_errors]
-    def get(self):
-        return jsonify({'tasks': ts.dump(self.tw.tasks.all(), many=True)})
+    def get(self, user):
+        tw = tw_for_user(user)
+        return jsonify({'tasks': ts.dump(tw.tasks.all(), many=True)})
 
-    def post(self):
-        task = Task(self.tw)
+    def post(self, user):
+        tw = tw_for_user(user)
+        task = Task(tw)
         data = ts.loads(request.data)
         for key in data:
             task[key] = data[key]
@@ -100,12 +106,10 @@ class TaskListResource(Resource):
 
 
 class TaskCommandResource(Resource):
-    def __init__(self, tw):
-        self.tw = tw
-
     method_decorators = [token_required, expose_errors]
-    def put(self, task_uuid, command):
-        task = self.tw.tasks.get(uuid = task_uuid)
+    def put(self, user, task_uuid, command):
+        tw = tw_for_user(user)
+        task = tw.tasks.get(uuid = task_uuid)
         if command == 'done':
             msg = 'Completed task {}.'
             task.done()
@@ -130,25 +134,23 @@ class TaskCommandResource(Resource):
         elif command == 'add_dependency':
             msg = 'Added dependency to task {}'
             data = dts.loads(request.data)
-            dep = self.tw.tasks.get(uuid = data['uuid'])
+            dep = tw.tasks.get(uuid = data['uuid'])
             task['depends'].add(dep)
             task.save()
         elif command == 'remove_dependency':
             msg = 'Removed dependency to task {}'
             data = dts.loads(request.data)
-            dep = self.tw.tasks.get(uuid = data['uuid'])
+            dep = tw.tasks.get(uuid = data['uuid'])
             task['depends'].remove(dep)
             task.save()
         return json_task_and_message(task, msg, 'info')
 
 
 class TaskServerResource(Resource):
-    def __init__(self, tw):
-        self.tw = tw
-
     method_decorators = [token_required, expose_errors]
-    def get(self):
-        self.tw.sync()
+    def get(self, user):
+        tw = tw_for_user(user)
+        tw.sync()
         return jsonify({
             'message': {
                 'description': 'Sync successful.',
@@ -160,10 +162,16 @@ class TaskServerResource(Resource):
 class AuthResource(Resource):
     def get(self):
         auth = request.authorization
-        if auth and auth.password and check_password_hash(current_app.config['PASSWORD'], auth.password):
+        if auth and \
+            auth.username and \
+            auth.password and \
+            auth.username in current_app.config['USER_CONF'] and \
+            check_password_hash(current_app.config['USER_CONF'][auth.username]['PASSWORD'], auth.password):
+
             token = jwt.encode({
+                'public_id': auth.username,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(minutes=current_app.config['TOKEN_EXP'])
+                'exp': datetime.utcnow() + timedelta(minutes=current_app.config['USER_CONF'][auth.username]['TOKEN_EXP'])
             }, current_app.config['SECRET_KEY'], algorithm="HS256")
             return jsonify({'token': token})
         return make_response('Could not verify', 401, {'WWW.Authentification': 'Basic realm: "login required"'})

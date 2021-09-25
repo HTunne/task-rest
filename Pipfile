@@ -4,6 +4,9 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+debugpy = "*"
+pytest = "*"
+python-dotenv = "*"
 
 [packages]
 flask = "*"
@@ -15,3 +18,9 @@ pyjwt = "*"
 
 [requires]
 python_version = "3.9"
+
+[scripts]
+serve = 'flask run'
+tests = 'pytest'
+add_user = 'python scripts/add_user.py'
+delete_user = 'python scripts/delete_user.py'
