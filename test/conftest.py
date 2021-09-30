@@ -12,8 +12,9 @@ from datetime import datetime, timedelta
 
 @pytest.fixture
 def client(tmpdir):
-    app = create_app(data_location = tmpdir)
+    app = create_app()
     app.config['TESTING'] = True
+    app.config['USER_CONF']['dev']['TASKDATA_LOCATION'] = tmpdir
 
     with app.test_client() as client:
         yield client
