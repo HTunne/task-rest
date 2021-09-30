@@ -17,8 +17,6 @@ def create_app():
     else:
         app.config.from_object(DevelopmentConfig())
 
-    print(app.config)
-
     CORS(app)
 
     api = Api(app)
