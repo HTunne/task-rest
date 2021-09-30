@@ -22,6 +22,7 @@ def client(tmpdir):
 @pytest.fixture
 def token():
     token = jwt.encode({
+        'public_id': 'dev',
         'iat': datetime.utcnow(),
         'exp': datetime.utcnow() \
         + timedelta(minutes=6)
